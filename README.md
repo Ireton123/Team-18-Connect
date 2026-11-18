@@ -4,7 +4,7 @@ Team 18, Section B, Intro to AI (Fall 2026), Carnegie Mellon University Heinz Co
 
 > The client's identity is confidential until they approve sharing it. This repository never names the organization; everything client-specific (crawled website content, contacts, logs, the evaluation questions) is generated locally under `private/`, which is excluded from version control.
 
-**Status: TP2 prototype (October 2026).** Runs from the command line; the hosted website version is planned for TP3.
+**Status: TP3 in progress (November 2026).** Runs from the command line and as a chat widget for the corner of a website (`member_assistant/web.py`, see [docs/hosting.md](docs/hosting.md)).
 
 ## The problem
 
@@ -88,6 +88,9 @@ python -m member_assistant.crawl --site https://<client-site> --county-wiki "<Wi
 # 2. Chat (shows the tool calls; add --no-guardrails to compare)
 python -m member_assistant.chat
 
+# 2b. Or run the website version: chat widget over the public site at http://127.0.0.1:8000
+python -m member_assistant.web
+
 # 3. Evaluate both conditions (about $3-4 per full run) and write a needs report
 python -m member_assistant.evaluate --judge
 python -m member_assistant.report
@@ -101,7 +104,9 @@ Each visitor message costs about $0.04 and takes 20 to 45 seconds with Claude Op
 ## Repository layout
 
 ```
-member_assistant/   crawl.py  kb.py  tools.py  guardrails.py  privacy.py  agent.py  chat.py  evaluate.py  report.py  config.py
+member_assistant/   crawl.py  kb.py  tools.py  guardrails.py  privacy.py  agent.py  chat.py  evaluate.py  report.py  config.py  web.py
+member_assistant/static/   widget.js (the embeddable chat widget) and demo.html
+render.yaml         deployment on Render (docs/hosting.md)
 skills/member-assistant/   SKILL.md and templates/
 tests/              offline unit tests with synthetic data
 private/            (not committed) crawled site, contacts, logs, evaluation set and runs, reports
@@ -109,7 +114,7 @@ private/            (not committed) crawled site, contacts, logs, evaluation set
 
 ## What's next (TP3)
 
-- Hosted website version with a chat widget. A public endpoint needs rate limiting and a spending cap, because anyone could run up API costs.
+- Hosted website version: the widget, server, rate limits, and daily spending cap are built (`web.py`, `docs/hosting.md`); deployment and a staff dashboard for the needs report are next.
 - A larger evaluation set built from real member questions, if the client can share anonymized ones (our TA's suggestion), plus a usability test with five people.
 - Tiered access for member organizations, if the client wants it (`private/access_policy.json` already supports member-only documents).
 - Simulated visitor traffic to show the needs report at realistic volume.
