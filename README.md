@@ -106,7 +106,8 @@ Each visitor message costs about $0.04 and takes 20 to 45 seconds with Claude Op
 ```
 member_assistant/   crawl.py  kb.py  tools.py  guardrails.py  privacy.py  agent.py  chat.py  evaluate.py  report.py  config.py  web.py
 member_assistant/static/   widget.js (the embeddable chat widget) and demo.html
-render.yaml         deployment on Render (docs/hosting.md)
+Dockerfile, deploy/ hosted deployment on Hugging Face Spaces (docs/hosting.md)
+render.yaml         alternative deployment on Render
 skills/member-assistant/   SKILL.md and templates/
 tests/              offline unit tests with synthetic data
 private/            (not committed) crawled site, contacts, logs, evaluation set and runs, reports

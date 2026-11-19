@@ -42,7 +42,26 @@ Every message costs money. With Claude Opus 5.5 the average in the evaluation wa
 
 The server refuses to start if the configured model has no price in `agent.PRICES`, because the daily cap would then never trigger. As a last backstop, give the hosting key its own spend limit in the Anthropic Console.
 
-## Deploy on Render
+## Deploy on Hugging Face Spaces
+
+The hosted demo runs as a Docker Space. Hosting a Docker Space needs a Hugging Face PRO subscription on the account that owns it ($9 a month in November 2026); without one, creating the Space fails with "402 Payment Required". The Space itself runs on the free `cpu-basic` hardware, which is enough because the model runs at Anthropic. It sleeps only after 48 hours without visitors, so it stays awake through a presentation. Don't change the hardware in the Space settings: other hardware is billed by the hour.
+
+```bash
+pip install huggingface_hub
+hf auth login                                   # once; a token with write access
+python deploy/hf_space.py <username>/<space-name>
+```
+
+The script creates a public Space if needed and asks for its secrets: `ANTHROPIC_API_KEY`, `CLIENT_SITE`, `COUNTY_WIKI` and `ACCESS_CODE`. They are stored as Space secrets, which visitors can't see. It then uploads only what the image needs: the `Dockerfile`, `requirements.txt`, `member_assistant/` and `deploy/start.sh`, plus `deploy/huggingface/README.md` as the Space's card. Hugging Face builds the image and crawls the public website as part of the build, which takes about 5 minutes. The app is then at `https://<username>-<space-name>.hf.space`.
+
+To ship new code, run the script again with `--code-only`. Each new build crawls the website again, so the knowledge base is as fresh as the last deploy.
+
+Notes:
+
+- The Space's file system is reset whenever it restarts or wakes up, and a free Space offers no easy way to download files from it. Treat the hosted logs as temporary; build the needs report from local or simulated runs.
+- Use the `hf.space` address for the demo. The `huggingface.co/spaces/...` page shows the app inside a Hugging Face frame.
+
+## Deploy on Render (alternative)
 
 `render.yaml` describes the service. In Render: **New → Blueprint**, pick this repository, then fill in the values it asks for:
 

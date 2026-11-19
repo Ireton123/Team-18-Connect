@@ -308,6 +308,8 @@ def create_app(settings: Settings | None = None, client: anthropic.Anthropic | N
     programs = config.load_json(config.PROGRAMS_PATH, [])
     contact = contacts.get("general_email") or contacts.get("contact_page") or profile.get("site_url", "")
     shared_client = client  # created lazily so the server can start (and show errors) without a key
+    if client is None and not (os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN")):
+        log.warning("ANTHROPIC_API_KEY is not set: pages will load, but every question will fail.")
 
     sessions = SessionStore(settings.session_ttl_s, settings.max_sessions)
     budget = Budget(settings.daily_budget_usd, config.LOG_DIR / "interactions.jsonl")
