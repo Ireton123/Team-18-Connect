@@ -1,0 +1,29 @@
+[
+ {
+  "id": "shared_fire",
+  "name": "Shared Fire Services",
+  "url": "https://riverbend.example.org/shared-fire-services/",
+  "category": "Public Safety",
+  "contacts": [
+   "safety@riverbend.example.org"
+  ]
+ },
+ {
+  "id": "stormwater",
+  "name": "Stormwater Partnership",
+  "url": "https://riverbend.example.org/stormwater/",
+  "category": "Infrastructure",
+  "contacts": [
+   "infrastructure@riverbend.example.org"
+  ]
+ },
+ {
+  "id": "digital_services",
+  "name": "Digital Services Cohort",
+  "url": "https://riverbend.example.org/digital-services/",
+  "category": "Infrastructure",
+  "contacts": [
+   "info@riverbend.example.org"
+  ]
+ }
+]

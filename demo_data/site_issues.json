@@ -1,0 +1,13 @@
+[
+ {
+  "type": "broken_link",
+  "url": "https://riverbend.example.org/files/2019-annual-report.pdf",
+  "titles": [
+   "2019 Annual Report"
+  ],
+  "found_on": [
+   "https://riverbend.example.org/about/"
+  ],
+  "detail": "HTTP 404"
+ }
+]

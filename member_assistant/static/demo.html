@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Website Assistant Demo</title>
+<meta name="description" content="Prototype: an AI assistant shown on top of the organization's public website.">
+<style>
+  :root { --bar: #11202f; --bar-ink: #e8eef5; --bar-muted: #9fb0c2; }
+  html, body { margin: 0; height: 100%; background: #fff; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+  .bar { position: fixed; inset: 0 0 auto 0; height: 40px; background: var(--bar); color: var(--bar-ink);
+         display: flex; align-items: center; gap: 12px; padding: 0 16px; font-size: 13px; z-index: 10; }
+  .bar b { font-weight: 600; white-space: nowrap; }
+  .bar .desc { color: var(--bar-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+  .bar a { color: var(--bar-ink); }
+  .pill { background: #f5b83d; color: #11202f; border-radius: 999px; padding: 2px 9px; font-weight: 700; font-size: 11px;
+          letter-spacing: .04em; text-transform: uppercase; flex: none; }
+  iframe { position: fixed; top: 40px; left: 0; width: 100%; height: calc(100% - 40px); border: 0; }
+  .fallback { position: fixed; top: 40px; inset-inline: 0; bottom: 0; display: none; place-items: center; text-align: center;
+              color: #44505e; padding: 24px; }
+  @media (max-width: 600px) { .bar .desc { display: none; } }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <span class="pill">Prototype</span>
+    <b id="name">Website assistant</b>
+    <span class="desc">The live public website is shown below. The chat button in the corner is our prototype. CMU Heinz College, Team 18.</span>
+  </div>
+  <iframe id="site" title="Public website" referrerpolicy="no-referrer"></iframe>
+  <div class="fallback" id="fallback"><p>The website preview isn't available. Use the chat button in the corner.</p></div>
+  <script>
+    fetch("/api/config").then(function (r) { return r.json(); }).then(function (c) {
+      document.getElementById("name").textContent = c.org_name + " · AI website assistant";
+      if (c.site_url) document.getElementById("site").src = c.site_url;
+      else document.getElementById("fallback").style.display = "grid";
+    }).catch(function () { document.getElementById("fallback").style.display = "grid"; });
+  </script>
+  <script src="/widget.js" defer></script>
+</body>
+</html>

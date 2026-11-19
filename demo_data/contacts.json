@@ -1,0 +1,45 @@
+{
+ "contacts": [
+  {
+   "email": "info@riverbend.example.org",
+   "name": "Jordan Lee",
+   "title": "Executive Director",
+   "contexts": [
+    "Membership and general questions"
+   ],
+   "listed_on_staff_page": true,
+   "source_urls": [
+    "https://riverbend.example.org/about/",
+    "https://riverbend.example.org/staff/"
+   ]
+  },
+  {
+   "email": "safety@riverbend.example.org",
+   "name": "Sam Ortiz",
+   "title": "Public Safety Director",
+   "contexts": [
+    "Get in touch with the Public Safety Director (Shared Fire Services)"
+   ],
+   "listed_on_staff_page": true,
+   "source_urls": [
+    "https://riverbend.example.org/shared-fire-services/",
+    "https://riverbend.example.org/staff/"
+   ]
+  },
+  {
+   "email": "infrastructure@riverbend.example.org",
+   "name": "Riley Chen",
+   "title": "Infrastructure Director",
+   "contexts": [
+    "Get in touch with the Infrastructure Director (Stormwater Partnership)"
+   ],
+   "listed_on_staff_page": true,
+   "source_urls": [
+    "https://riverbend.example.org/stormwater/",
+    "https://riverbend.example.org/staff/"
+   ]
+  }
+ ],
+ "general_email": "info@riverbend.example.org",
+ "contact_page": "https://riverbend.example.org/staff/"
+}

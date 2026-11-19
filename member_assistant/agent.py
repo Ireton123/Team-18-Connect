@@ -10,6 +10,7 @@ import secrets
 import time
 import warnings
 from collections import Counter
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -125,7 +126,12 @@ class Assistant:
 
     # ------------------------------------------------------------ one turn
 
-    def ask(self, text: str) -> Reply:
+    def ask(self, text: str, on_step: Callable[[dict], None] | None = None) -> Reply:
+        """Answer one visitor message.
+
+        ``on_step``, if given, is called with each tool call's trace entry as soon as the tool has run,
+        so a caller such as the web server can show the agent's progress before the reply is ready.
+        """
         started = time.monotonic()
         start_len = len(self.messages)
         state, trace, retrieved, events, usage = TurnState(), [], [], [], Counter()
@@ -144,7 +150,7 @@ class Assistant:
                 citations, stop_reason, served_by = [], "emergency_screen", "none"
             else:
                 self.messages.append({"role": "user", "content": text})
-                response = self._loop(state, trace, retrieved, usage, events)
+                response = self._loop(state, trace, retrieved, usage, events, on_step)
                 final_text, citations = self._read_final(response, events)
                 stop_reason, served_by = response.stop_reason, response.model
         except Exception:
@@ -177,7 +183,8 @@ class Assistant:
         reply.log_record = self._log(text, reply)
         return reply
 
-    def _loop(self, state: TurnState, trace: list, retrieved: list, usage: Counter, events: list):
+    def _loop(self, state: TurnState, trace: list, retrieved: list, usage: Counter, events: list,
+              on_step: Callable[[dict], None] | None = None):
         """Call the model, run the tools it asks for, and repeat until it replies without a tool call."""
         for _ in range(config.MAX_AGENT_STEPS):
             response = self._call()
@@ -201,6 +208,8 @@ class Assistant:
                 output, is_error = self.toolbox.run(block.name, args, state)
                 trace.append({"tool": block.name, "input": args, "result": summarize_result(output),
                               "output": output if isinstance(output, str) else None, "is_error": is_error})
+                if on_step:
+                    on_step(trace[-1])
                 if isinstance(output, list):
                     retrieved.extend({"source": r["source"], "title": r["title"],
                                       "text": "\n".join(t["text"] for t in r["content"])}

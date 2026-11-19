@@ -1,0 +1,29 @@
+# Render blueprint for the website assistant. See docs/hosting.md.
+# Values marked `sync: false` are entered in the Render dashboard, never committed.
+services:
+  - type: web
+    name: member-assistant
+    runtime: python
+    plan: free            # switch to a paid plan for the presentation week so it doesn't sleep
+    # The knowledge base is built from the public website at deploy time, so no crawled
+    # content is stored in this repository.
+    buildCommand: >-
+      pip install -r requirements.txt &&
+      python -m member_assistant.crawl --site "$CLIENT_SITE" --county-wiki "$COUNTY_WIKI"
+    startCommand: uvicorn member_assistant.web:create_app --factory --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: CLIENT_SITE
+        sync: false
+      - key: COUNTY_WIKI
+        sync: false
+      - key: ACCESS_CODE        # leave empty to make the assistant open to everyone
+        sync: false
+      - key: DAILY_BUDGET_USD
+        value: "10"
+      - key: TRUST_PROXY_HEADERS
+        value: "1"

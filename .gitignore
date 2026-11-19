@@ -8,7 +8,7 @@ __pycache__/
 .env
 
 # Client-specific data (crawled site, reports, contacts, logs, eval set). Kept out of the
-# public repo because the client identity is confidential until they approve sharing.
+# public repo: it is rebuilt from the public website, and the logs hold visitor data.
 private/
 
 # macOS
