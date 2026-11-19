@@ -151,6 +151,7 @@
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
   var state = { tab: "overview", days: 30 };
+  var LOCALE = document.documentElement.lang || undefined;  // the interface is English, so are its dates
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
@@ -160,7 +161,7 @@
   function when(ts) {
     if (!ts) return "";
     var d = new Date(ts);
-    return isNaN(d) ? esc(ts) : d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    return isNaN(d) ? esc(ts) : d.toLocaleString(LOCALE, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   }
   function pct(x) { return x == null ? "–" : Math.round(x * 100) + "%"; }
   function money(x) { return x == null ? "–" : "$" + Number(x).toFixed(2); }
@@ -245,7 +246,7 @@
       });
       if (total) bars += '<text x="' + (x + bw * 0.32).toFixed(1) + '" y="' + (y - 3).toFixed(1) + '" text-anchor="middle">' + total + "</text>";
       if (i % 2 === n % 2 || i === n - 1) {
-        var label = new Date(d.date + "T12:00:00Z").toLocaleDateString(undefined, { month: "short", day: "numeric" });
+        var label = new Date(d.date + "T12:00:00Z").toLocaleDateString(LOCALE, { month: "short", day: "numeric" });
         bars += '<text x="' + (x + bw * 0.32).toFixed(1) + '" y="' + (h - 4) + '" text-anchor="middle">' + esc(label) + "</text>";
       }
     });
@@ -284,7 +285,7 @@
         chart(d.daily, d.groups) + '</div><div class="card"><h2>How questions ended <small>· last 7 days</small></h2>' +
         hbars(d.outcomes, "count", "label") + "</div></div>" +
         '<p class="note">' + d.total_questions + " questions logged" +
-        (d.first_logged ? " since " + esc(new Date(d.first_logged).toLocaleDateString()) : "") +
+        (d.first_logged ? " since " + esc(new Date(d.first_logged).toLocaleDateString(LOCALE)) : "") +
         ". Emergency messages are answered with 911/988 information without the AI and are counted under “Out of scope or emergency”.</p>";
       var go = $("go-requests");
       if (go) go.addEventListener("click", function (e) { e.preventDefault(); document.querySelector('[data-tab="requests"]').click(); });

@@ -1,0 +1,26 @@
+[
+ {
+  "name": "Millbrook",
+  "type": "borough",
+  "population": 3100,
+  "size_band": "small (<5k)",
+  "is_member": true,
+  "ambiguous": false
+ },
+ {
+  "name": "Cedar Falls",
+  "type": "township",
+  "population": 14000,
+  "size_band": "medium (5k-20k)",
+  "is_member": true,
+  "ambiguous": false
+ },
+ {
+  "name": "North Riverbend",
+  "type": "city",
+  "population": 41000,
+  "size_band": "large (20k+)",
+  "is_member": false,
+  "ambiguous": false
+ }
+]
