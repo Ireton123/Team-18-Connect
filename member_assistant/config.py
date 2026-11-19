@@ -2,8 +2,8 @@
 
 Client-specific material (crawled pages, reports, contacts, logs, the
 evaluation questions) lives under ``private/``, which is gitignored. The
-client's identity stays confidential until they approve sharing it, so the
-committed code never names the organization.
+committed code never hard-codes the organization, so it can serve another
+organization's website after a new crawl.
 """
 
 import json
