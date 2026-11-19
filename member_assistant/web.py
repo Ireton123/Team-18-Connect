@@ -11,6 +11,7 @@ Routes:
     POST /api/session  start a visitor session (checks the access code)
     POST /api/chat     one visitor message; streams each tool call, then the reply (Server-Sent Events)
     GET  /healthz      liveness check for the hosting platform
+    /admin, /api/admin/...   the staff dashboard, only when ADMIN_PASSWORD is set (see admin.py)
 
 Every message goes through the same ``Assistant.ask()`` as the command line and the evaluation, with
 guardrails on. Because the endpoint is public and every message costs money, the server also enforces
@@ -29,6 +30,7 @@ import secrets
 import threading
 import time
 from collections import deque
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -39,7 +41,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
-from . import config
+from . import admin, config, logsync
 from .agent import PRICES, Assistant, Reply
 from .kb import KnowledgeBase
 
@@ -71,6 +73,7 @@ class Settings:
     max_sessions: int = 300              # MAX_SESSIONS: oldest idle sessions are dropped beyond this
     trust_proxy_headers: bool = False    # TRUST_PROXY_HEADERS=1 behind a hosting proxy (Render, Fly, ...)
     allowed_origins: list[str] = field(default_factory=list)  # ALLOWED_ORIGINS: other sites that embed the widget
+    admin_password: str = ""             # ADMIN_PASSWORD: turns on the staff dashboard at /admin
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -87,6 +90,7 @@ class Settings:
             max_sessions=_env_int("MAX_SESSIONS", cls.max_sessions),
             trust_proxy_headers=os.environ.get("TRUST_PROXY_HEADERS", "0") == "1",
             allowed_origins=[o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()],
+            admin_password=os.environ.get("ADMIN_PASSWORD", "").strip(),
         )
 
 
@@ -311,13 +315,22 @@ def create_app(settings: Settings | None = None, client: anthropic.Anthropic | N
     if client is None and not (os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN")):
         log.warning("ANTHROPIC_API_KEY is not set: pages will load, but every question will fail.")
 
+    # Restore the logs from their backup (if configured) before the budget and dashboard read them.
+    sync = logsync.start_from_env(config.LOG_DIR)
+
     sessions = SessionStore(settings.session_ttl_s, settings.max_sessions)
     budget = Budget(settings.daily_budget_usd, config.LOG_DIR / "interactions.jsonl")
     site_limit = RateLimiter(settings.site_messages_per_hour, 3600)
     ip_limit = RateLimiter(settings.ip_messages, settings.ip_window_s)
     session_limit = RateLimiter(settings.ip_sessions_per_hour, 3600)
 
-    app = FastAPI(title="Member assistant", docs_url=None, redoc_url=None, openapi_url=None)
+    @asynccontextmanager
+    async def lifespan(_app):
+        yield
+        if sync:
+            sync.stop()  # upload the last log lines before the process exits
+
+    app = FastAPI(title="Member assistant", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     if settings.allowed_origins:
         app.add_middleware(CORSMiddleware, allow_origins=settings.allowed_origins,
                            allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
@@ -438,6 +451,11 @@ def create_app(settings: Settings | None = None, client: anthropic.Anthropic | N
     @app.exception_handler(HTTPException)
     def http_error(request: Request, exc: HTTPException):
         return JSONResponse({"error": exc.detail}, status_code=exc.status_code)
+
+    if settings.admin_password:
+        dashboard = admin.Dashboard(programs, budget=budget, log_backup=sync is not None)
+        app.include_router(admin.router(settings.admin_password, dashboard, RateLimiter(10, 900), client_ip,
+                                        settings.trust_proxy_headers))
 
     @app.get("/widget.js")
     def widget():

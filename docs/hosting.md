@@ -14,6 +14,19 @@ To put the widget on another site (for example the organization's own website), 
 <script src="https://<assistant server>/widget.js" data-accent="#0f4c75" defer></script>
 ```
 
+## Staff dashboard
+
+Set `ADMIN_PASSWORD` and staff can sign in at `/admin`. It is a separate password from the visitors' `ACCESS_CODE`. The dashboard reads the same redacted logs as the needs report (`report.py`), so it shows nothing the privacy filter removed. It has four tabs:
+
+- **Overview**: questions today and over the last 7 days, the share answered from the website, open requests for staff, average answer time, today's AI cost against the daily cap, and a 14-day chart of how questions ended.
+- **Requests for staff**: every escalation with its reference number, urgency, topic, the anonymous summary and who it was routed to. Staff mark each one handled, or reopen it; the status is kept in `request_status.jsonl` next to the other logs.
+- **Content gaps**: the questions the website couldn't answer, the topics that pass the needs report's gap threshold, and the broken links the crawler found.
+- **Visitor needs**: questions by topic, visitor role and municipality type (never by name).
+
+"Download needs report" saves the Markdown needs report for the chosen period, without the model-drafted suggestions; run `python -m member_assistant.report` for those.
+
+The sign-in sets an HttpOnly, SameSite=Strict cookie that lasts 12 hours. Changing `ADMIN_PASSWORD` signs everyone out. After 10 failed attempts in 15 minutes from one address, sign-in is blocked for a while. Open the dashboard at the `hf.space` address: inside the `huggingface.co/spaces/...` frame the browser doesn't send the cookie.
+
 ## Run it locally
 
 ```bash
@@ -58,7 +71,7 @@ To ship new code, run the script again with `--code-only`. Each new build crawls
 
 Notes:
 
-- The Space's file system is reset whenever it restarts or wakes up, and a free Space offers no easy way to download files from it. Treat the hosted logs as temporary; build the needs report from local or simulated runs.
+- The Space's file system is reset whenever it restarts or wakes up. The script therefore also creates a private dataset, `<space-name>-logs`, and sets the `LOG_DATASET` variable. With an `HF_TOKEN` secret that can write to that dataset, the app restores the logs from it when it starts and uploads them every 2 minutes (`member_assistant/logsync.py`). Without the token the app still runs, but the logs and the staff dashboard start empty after each restart.
 - Use the `hf.space` address for the demo. The `huggingface.co/spaces/...` page shows the app inside a Hugging Face frame.
 
 ## Deploy on Render (alternative)

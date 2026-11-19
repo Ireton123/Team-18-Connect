@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Staff Dashboard</title>
+<style>
+  :root {
+    --bg: #f4f6f9; --card: #fff; --ink: #17212b; --muted: #5b6876; --line: #e1e6ec;
+    --accent: #0f4c75; --accent-soft: #e6eef5;
+    --c-answered: #2f7d5b; --c-staff: #0f4c75; --c-unanswered: #c2662d; --c-other: #9aa5b1;
+    --warn: #b4561b; --warn-soft: #fbeee4; --ok: #2f7d5b; --ok-soft: #e5f2ec;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #11161c; --card: #1a2129; --ink: #e6ebf0; --muted: #9aa7b4; --line: #2b3540;
+      --accent: #7fb3d9; --accent-soft: #1d2d3b;
+      --c-answered: #5fb98f; --c-staff: #6aa6d3; --c-unanswered: #e39361; --c-other: #66727e;
+      --warn: #f0a070; --warn-soft: #3a2619; --ok: #6cc59b; --ok-soft: #183026; color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 -apple-system, BlinkMacSystemFont,
+         "Segoe UI", Roboto, Arial, sans-serif; }
+  button, select { font: inherit; }
+  a { color: var(--accent); }
+  header { background: var(--card); border-bottom: 1px solid var(--line); }
+  .top { max-width: 1100px; margin: 0 auto; padding: 14px 16px 0; display: flex; align-items: center; gap: 12px;
+         flex-wrap: wrap; }
+  .top h1 { font-size: 17px; margin: 0; flex: 1; min-width: 200px; }
+  .top h1 small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+  .btn { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 8px;
+         padding: 6px 12px; cursor: pointer; text-decoration: none; display: inline-block; }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.primary { color: #0d1720; } }
+  nav { max-width: 1100px; margin: 0 auto; padding: 0 16px; display: flex; gap: 4px; overflow-x: auto; }
+  nav button { border: 0; background: none; padding: 12px 12px 10px; color: var(--muted); cursor: pointer;
+               border-bottom: 2px solid transparent; white-space: nowrap; }
+  nav button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+  .badge { background: var(--warn); color: #fff; border-radius: 999px; padding: 0 7px; font-size: 11px;
+           margin-left: 4px; font-weight: 700; }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 48px; }
+  .bar { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; color: var(--muted); }
+  .bar .grow { flex: 1; }
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(6, 1fr); margin-bottom: 16px; }
+  @media (max-width: 1000px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 560px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .card h2 { font-size: 14px; margin: 0 0 12px; }
+  .card h2 small { font-weight: 400; color: var(--muted); }
+  .stat .label { color: var(--muted); font-size: 12px; }
+  .stat .value { font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; line-height: 1.2; }
+  .stat .sub { color: var(--muted); font-size: 12px; }
+  .cols { display: grid; gap: 12px; grid-template-columns: 2fr 1fr; }
+  @media (max-width: 800px) { .cols { grid-template-columns: 1fr; } }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px;
+              vertical-align: -1px; }
+  svg text { fill: var(--muted); font-size: 10px; }
+  .hbar { display: grid; grid-template-columns: minmax(110px, 1fr) 2fr 34px; gap: 8px; align-items: center;
+          margin: 6px 0; font-size: 13px; }
+  .hbar .track { background: var(--accent-soft); border-radius: 4px; height: 10px; overflow: hidden; }
+  .hbar .fill { background: var(--accent); height: 100%; }
+  .hbar .n { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .table-wrap { overflow-x: auto; }
+  .pill { display: inline-block; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 600;
+          white-space: nowrap; }
+  .pill.urgent { background: var(--warn-soft); color: var(--warn); }
+  .pill.routine { background: var(--accent-soft); color: var(--accent); }
+  .pill.done { background: var(--ok-soft); color: var(--ok); }
+  .pill.gap { background: var(--warn-soft); color: var(--warn); }
+  .req { display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; padding: 14px 0;
+         border-bottom: 1px solid var(--line); }
+  .req:last-child { border-bottom: 0; }
+  .req.handled { opacity: .6; }
+  .req .meta { color: var(--muted); font-size: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .req .ref { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 600; color: var(--ink); }
+  .req p { margin: 4px 0 0; }
+  .req .actions { grid-row: span 2; align-self: center; }
+  @media (max-width: 600px) { .req { grid-template-columns: 1fr; } .req .actions { grid-row: auto; } }
+  .empty { color: var(--muted); padding: 18px 0; text-align: center; }
+  .note { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+  .warnbox { background: var(--warn-soft); color: var(--warn); border-radius: 10px; padding: 10px 14px;
+             margin-bottom: 16px; font-size: 13px; }
+  .login { max-width: 360px; margin: 12vh auto; }
+  .login input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px;
+                 background: var(--bg); color: var(--ink); font: inherit; margin: 10px 0; }
+  .login .err { color: var(--warn); font-size: 13px; min-height: 20px; }
+  ul.examples { margin: 4px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+  .break { word-break: break-all; }
+</style>
+</head>
+<body>
+<section class="login card" id="login" hidden>
+  <h2 style="font-size:18px;margin:0 0 4px">Staff dashboard</h2>
+  <div style="color:var(--muted)">Sign in with the staff password.</div>
+  <form id="login-form">
+    <input type="password" id="password" autocomplete="current-password" placeholder="Password" required>
+    <div class="err" id="login-err" role="alert"></div>
+    <button class="btn primary" style="width:100%">Sign in</button>
+  </form>
+</section>
+
+<div id="app" hidden>
+  <header>
+    <div class="top">
+      <h1><span id="org">Website assistant</span> · Staff dashboard
+        <small>What visitors asked the website assistant, requests for staff, and where the website falls short.
+        Personal details are removed before anything is saved.</small></h1>
+      <a class="btn" id="download" href="#">Download needs report</a>
+      <button class="btn" id="logout">Sign out</button>
+    </div>
+    <nav role="tablist">
+      <button role="tab" data-tab="overview" aria-selected="true">Overview</button>
+      <button role="tab" data-tab="requests">Requests for staff <span class="badge" id="open-badge" hidden></span></button>
+      <button role="tab" data-tab="gaps">Content gaps</button>
+      <button role="tab" data-tab="needs">Visitor needs</button>
+    </nav>
+  </header>
+  <main>
+    <div class="warnbox" id="backup-warn" hidden>Logs aren't backed up on this server, so they will be empty after
+      it restarts. Set LOG_DATASET and HF_TOKEN to keep them (see docs/hosting.md).</div>
+    <div class="bar" id="period-bar" hidden>
+      <span class="grow" id="period-note"></span>
+      <label>Period
+        <select id="period">
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="0">All time</option>
+        </select>
+      </label>
+    </div>
+    <section id="tab-overview"></section>
+    <section id="tab-requests" hidden></section>
+    <section id="tab-gaps" hidden></section>
+    <section id="tab-needs" hidden></section>
+  </main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var state = { tab: "overview", days: 30 };
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function when(ts) {
+    if (!ts) return "";
+    var d = new Date(ts);
+    return isNaN(d) ? esc(ts) : d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  }
+  function pct(x) { return x == null ? "–" : Math.round(x * 100) + "%"; }
+  function money(x) { return x == null ? "–" : "$" + Number(x).toFixed(2); }
+
+  function api(path, opts) {
+    opts = opts || {};
+    opts.credentials = "same-origin";
+    if (opts.body) opts.headers = { "Content-Type": "application/json" };
+    return fetch(path, opts).then(function (r) {
+      if (r.status === 401 && path !== "/api/admin/login") { showLogin(); throw new Error("signed out"); }
+      return r.json().then(function (data) {
+        if (!r.ok) throw new Error(data.error || "Request failed");
+        return data;
+      });
+    });
+  }
+
+  function showLogin() { $("app").hidden = true; $("login").hidden = false; $("password").focus(); }
+  function showApp() { $("login").hidden = true; $("app").hidden = false; load(); }
+
+  $("login-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    $("login-err").textContent = "";
+    api("/api/admin/login", { method: "POST", body: JSON.stringify({ password: $("password").value }) })
+      .then(function () { $("password").value = ""; showApp(); })
+      .catch(function (err) { $("login-err").textContent = err.message; });
+  });
+  $("logout").addEventListener("click", function () {
+    fetch("/api/admin/logout", { method: "POST", credentials: "same-origin" }).then(showLogin);
+  });
+
+  document.querySelectorAll("nav button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      state.tab = b.dataset.tab;
+      document.querySelectorAll("nav button").forEach(function (x) { x.setAttribute("aria-selected", x === b); });
+      ["overview", "requests", "gaps", "needs"].forEach(function (t) { $("tab-" + t).hidden = t !== state.tab; });
+      load();
+    });
+  });
+  $("period").addEventListener("change", function () { state.days = Number($("period").value); load(); });
+
+  function updateDownload() { $("download").href = "/api/admin/report.md?days=" + state.days; }
+
+  function load() {
+    $("period-bar").hidden = state.tab === "overview" || state.tab === "requests";
+    updateDownload();
+    var render = { overview: overview, requests: requests, gaps: gaps, needs: needs }[state.tab];
+    render().catch(function (err) {
+      if (err.message !== "signed out") $("tab-" + state.tab).innerHTML = '<div class="card empty">' + esc(err.message) + "</div>";
+    });
+    if (state.tab !== "overview") refreshBadge();
+  }
+
+  function refreshBadge(n) {
+    var set = function (count) { $("open-badge").textContent = count; $("open-badge").hidden = !count; };
+    if (n != null) return set(n);
+    api("/api/admin/requests").then(function (d) {
+      set(d.requests.filter(function (r) { return r.status === "open"; }).length);
+    }).catch(function () {});
+  }
+
+  // ------------------------------------------------------------ overview
+  function stat(label, value, sub) {
+    return '<div class="card stat"><div class="label">' + esc(label) + '</div><div class="value">' + value +
+      '</div><div class="sub">' + (sub || "&nbsp;") + "</div></div>";
+  }
+
+  function chart(daily, groups) {
+    var w = 640, h = 190, pad = 22, n = daily.length, bw = (w - pad) / n;
+    var max = Math.max(1, Math.max.apply(null, daily.map(function (d) {
+      return groups.reduce(function (s, g) { return s + d[g.key]; }, 0);
+    })));
+    var scale = (h - 30) / max, bars = "";
+    daily.forEach(function (d, i) {
+      var y = h - 18, x = pad + i * bw + bw * 0.18, total = 0;
+      groups.forEach(function (g) {
+        var v = d[g.key]; if (!v) return;
+        var bh = v * scale; y -= bh; total += v;
+        bars += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + (bw * 0.64).toFixed(1) +
+          '" height="' + bh.toFixed(1) + '" rx="2" fill="var(--c-' + g.key + ')"><title>' + esc(d.date) + ": " +
+          v + " " + esc(g.label.toLowerCase()) + "</title></rect>";
+      });
+      if (total) bars += '<text x="' + (x + bw * 0.32).toFixed(1) + '" y="' + (y - 3).toFixed(1) + '" text-anchor="middle">' + total + "</text>";
+      if (i % 2 === n % 2 || i === n - 1) {
+        var label = new Date(d.date + "T12:00:00Z").toLocaleDateString(undefined, { month: "short", day: "numeric" });
+        bars += '<text x="' + (x + bw * 0.32).toFixed(1) + '" y="' + (h - 4) + '" text-anchor="middle">' + esc(label) + "</text>";
+      }
+    });
+    var axis = '<line x1="' + pad + '" x2="' + w + '" y1="' + (h - 18) + '" y2="' + (h - 18) + '" stroke="var(--line)"/>';
+    var legend = groups.map(function (g) {
+      return '<span><i style="background:var(--c-' + g.key + ')"></i>' + esc(g.label) + "</span>";
+    }).join("");
+    return '<svg viewBox="0 0 ' + w + " " + h + '" width="100%" role="img" aria-label="Questions per day">' + axis + bars +
+      '</svg><div class="legend">' + legend + "</div>";
+  }
+
+  function hbars(rows, key, label) {
+    var max = Math.max.apply(null, [1].concat(rows.map(function (r) { return r[key]; })));
+    return rows.map(function (r) {
+      return '<div class="hbar"><span>' + esc(r[label]) + '</span><span class="track"><span class="fill" style="display:block;width:' +
+        (100 * r[key] / max).toFixed(0) + '%"></span></span><span class="n">' + r[key] + "</span></div>";
+    }).join("") || '<div class="empty">Nothing yet.</div>';
+  }
+
+  function overview() {
+    return api("/api/admin/overview").then(function (d) {
+      $("backup-warn").hidden = d.log_backup;
+      refreshBadge(d.open_requests);
+      var t = d.today, w = d.week;
+      var budget = t.budget_usd ? " of " + money(t.budget_usd) + " daily cap" : "";
+      $("tab-overview").innerHTML =
+        '<div class="grid">' +
+        stat("Questions today", t.questions, t.conversations + " conversation" + (t.conversations === 1 ? "" : "s")) +
+        stat("Questions, last 7 days", w.questions, w.conversations + " conversations") +
+        stat("Answered from the website", pct(w.answered_share), "of questions about the organization, 7 days") +
+        stat("Open requests for staff", d.open_requests, d.open_requests ? '<a href="#" id="go-requests">Review them</a>' : "All handled") +
+        stat("Average answer time", w.avg_latency_s == null ? "–" : w.avg_latency_s + " s", "last 7 days") +
+        stat("AI cost today", money(t.spent_usd), budget || "&nbsp;") +
+        "</div>" +
+        '<div class="cols"><div class="card"><h2>Questions per day <small>· last 14 days</small></h2>' +
+        chart(d.daily, d.groups) + '</div><div class="card"><h2>How questions ended <small>· last 7 days</small></h2>' +
+        hbars(d.outcomes, "count", "label") + "</div></div>" +
+        '<p class="note">' + d.total_questions + " questions logged" +
+        (d.first_logged ? " since " + esc(new Date(d.first_logged).toLocaleDateString()) : "") +
+        ". Emergency messages are answered with 911/988 information without the AI and are counted under “Out of scope or emergency”.</p>";
+      var go = $("go-requests");
+      if (go) go.addEventListener("click", function (e) { e.preventDefault(); document.querySelector('[data-tab="requests"]').click(); });
+    });
+  }
+
+  // ------------------------------------------------------------ requests
+  function requests() {
+    return api("/api/admin/requests").then(function (d) {
+      var open = d.requests.filter(function (r) { return r.status === "open"; }).length;
+      refreshBadge(open);
+      var items = d.requests.map(function (r) {
+        var handled = r.status === "handled";
+        return '<div class="req' + (handled ? " handled" : "") + '"><div class="meta"><span class="ref">' + esc(r.reference) + "</span>" +
+          (r.urgency === "time_sensitive" ? '<span class="pill urgent">Time-sensitive</span>' : '<span class="pill routine">Routine</span>') +
+          (handled ? '<span class="pill done">Handled</span>' : "") +
+          "<span>" + esc(r.topic) + "</span><span>· " + when(r.ts) + "</span><span>· routed to " + esc(r.routed_to) + "</span></div>" +
+          '<div class="actions"><button class="btn' + (handled ? "" : " primary") + '" data-ref="' + esc(r.reference) +
+          '" data-status="' + (handled ? "open" : "handled") + '">' + (handled ? "Reopen" : "Mark handled") + "</button></div>" +
+          "<p>" + esc(r.summary) + "</p></div>";
+      }).join("");
+      $("tab-requests").innerHTML = '<div class="card"><h2>Requests for staff <small>· ' + open + " open, " +
+        (d.requests.length - open) + " handled</small></h2>" +
+        (items || '<div class="empty">No requests yet. When the assistant passes a request to staff, it appears here with its reference number.</div>') +
+        '<p class="note">The assistant writes each summary from the visitor’s message with personal details removed. ' +
+        "Visitors were given the reference number and are usually pointed to the listed contact too, so check that inbox before replying.</p></div>";
+      $("tab-requests").querySelectorAll("button[data-ref]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          b.disabled = true;
+          api("/api/admin/requests/" + encodeURIComponent(b.dataset.ref), { method: "POST",
+            body: JSON.stringify({ status: b.dataset.status }) }).then(requests)
+            .catch(function (err) { b.disabled = false; alert(err.message); });
+        });
+      });
+    });
+  }
+
+  // ------------------------------------------------------------ gaps
+  function periodNote(text) { $("period-note").textContent = text; }
+
+  function gaps() {
+    return api("/api/admin/gaps?days=" + state.days).then(function (d) {
+      periodNote("Questions the assistant couldn't answer from the website, and problems the crawler found on it.");
+      var topics = d.gap_topics.map(function (t) {
+        return "<tr><td><b>" + esc(t.label) + '</b><ul class="examples">' + t.examples.map(function (e) {
+          return "<li>" + esc(e) + "</li>"; }).join("") + '</ul></td><td class="num">' + t.unanswered + " of " +
+          t.questions + '</td><td class="num">' + pct(t.unanswered_share) + "</td></tr>";
+      }).join("");
+      var rows = d.unanswered.map(function (r) {
+        return "<tr><td style=\"white-space:nowrap\">" + when(r.ts) + "</td><td>" + esc(r.topic) + "</td><td>" + esc(r.need) +
+          "</td><td>" + esc(r.outcome) + "</td></tr>";
+      }).join("");
+      var issues = d.site_issues.map(function (i) {
+        return "<tr><td>" + esc(i.type) + '</td><td class="break">' + (i.url ? '<a href="' + esc(i.url) + '" target="_blank" rel="noopener">' +
+          esc(i.url) + "</a>" : "") + "</td><td>" + esc(i.detail) + '</td><td class="break">' + i.found_on.map(function (u) {
+          return '<a href="' + esc(u) + '" target="_blank" rel="noopener">' + esc(u.replace(/^https?:\/\//, "")) + "</a>"; }).join("<br>") + "</td></tr>";
+      }).join("");
+      $("tab-gaps").innerHTML =
+        '<div class="card" style="margin-bottom:12px"><h2>Topics where the website falls short</h2>' +
+        (topics ? '<div class="table-wrap"><table><tr><th>Topic and example needs</th><th class="num">Not answered</th><th class="num">Share</th></tr>' + topics + "</table></div>"
+          : '<div class="empty">No topic has reached the threshold yet.</div>') +
+        '<p class="note">A topic is listed once it has at least ' + d.thresholds.min_questions + " questions and more than " +
+        pct(d.thresholds.share) + " of them couldn’t be answered from the website. Add the missing information to the page for that topic.</p></div>" +
+        '<div class="card" style="margin-bottom:12px"><h2>Questions without an answer on the website <small>· ' + d.unanswered.length + "</small></h2>" +
+        (rows ? '<div class="table-wrap"><table><tr><th>When</th><th>Topic</th><th>What the visitor needed</th><th>Assistant did</th></tr>' + rows + "</table></div>"
+          : '<div class="empty">None in this period.</div>') + "</div>" +
+        '<div class="card"><h2>Website problems found by the crawler <small>· ' + d.site_issues.length + "</small></h2>" +
+        (issues ? '<div class="table-wrap"><table><tr><th>Problem</th><th>Link</th><th>Detail</th><th>Found on</th></tr>' + issues + "</table></div>"
+          : '<div class="empty">None found.</div>') + '<p class="note">Checked each time the assistant is deployed.</p></div>';
+    });
+  }
+
+  // ------------------------------------------------------------ needs
+  function needs() {
+    return api("/api/admin/needs?days=" + state.days).then(function (d) {
+      periodNote(d.total + " questions: " + d.needs + " about the organization’s work, " + d.out_of_scope +
+        " out of scope, " + d.safety + " emergency redirects.");
+      var rows = d.topics.map(function (t) {
+        return "<tr><td><b>" + esc(t.label) + "</b>" + (t.gap ? ' <span class="pill gap">Gap</span>' : "") +
+          '<ul class="examples">' + t.examples.map(function (e) { return "<li>" + esc(e) + "</li>"; }).join("") +
+          '</ul></td><td class="num">' + t.questions + '</td><td class="num">' + pct(t.unanswered_share) + "</td><td>" +
+          esc(String(t.top_role).replace(/_/g, " ")) + "</td></tr>";
+      }).join("");
+      $("tab-needs").innerHTML =
+        '<div class="cols"><div class="card"><h2>Questions by topic</h2>' +
+        (rows ? '<div class="table-wrap"><table><tr><th>Topic and example needs</th><th class="num">Questions</th><th class="num">Not answered</th><th>Most common visitor</th></tr>' + rows + "</table></div>"
+          : '<div class="empty">No questions in this period.</div>') +
+        '</div><div><div class="card" style="margin-bottom:12px"><h2>Who is asking</h2>' + hbars(d.roles, "count", "role") +
+        '<p class="note">The assistant infers the role from the conversation; “unknown” means the visitor didn’t say.</p></div>' +
+        '<div class="card"><h2>Municipality types mentioned</h2>' + hbars(d.segments, "count", "segment") +
+        '<p class="note">Municipalities are recorded only by type and size, never by name.</p></div></div></div>';
+    });
+  }
+
+  // ------------------------------------------------------------ start
+  fetch("/api/config").then(function (r) { return r.json(); }).then(function (c) {
+    $("org").textContent = c.org_name; document.title = c.org_name + " · Staff Dashboard";
+  }).catch(function () {});
+  api("/api/admin/overview").then(function () { showApp(); }).catch(function () {});
+})();
+</script>
+</body>
+</html>

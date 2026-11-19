@@ -104,8 +104,8 @@ Each visitor message costs about $0.04 and takes 20 to 45 seconds with Claude Op
 ## Repository layout
 
 ```
-member_assistant/   crawl.py  kb.py  tools.py  guardrails.py  privacy.py  agent.py  chat.py  evaluate.py  report.py  config.py  web.py
-member_assistant/static/   widget.js (the embeddable chat widget) and demo.html
+member_assistant/   crawl.py  kb.py  tools.py  guardrails.py  privacy.py  agent.py  chat.py  evaluate.py  report.py  config.py  web.py  admin.py  logsync.py
+member_assistant/static/   widget.js (the embeddable chat widget), demo.html, admin.html (the staff dashboard)
 Dockerfile, deploy/ hosted deployment on Hugging Face Spaces (docs/hosting.md)
 render.yaml         alternative deployment on Render
 skills/member-assistant/   SKILL.md and templates/
@@ -115,7 +115,7 @@ private/            (not committed) crawled site, contacts, logs, evaluation set
 
 ## What's next (TP3)
 
-- Hosted website version: the widget, server, rate limits, and daily spending cap are built (`web.py`, `docs/hosting.md`); deployment and a staff dashboard for the needs report are next.
+- Hosted website version: the widget, server, rate limits, daily spending cap, and a staff dashboard (`/admin`) are built and deployed on Hugging Face Spaces (`web.py`, `admin.py`, `docs/hosting.md`). Next: email staff when a request comes in, instead of only listing it on the dashboard.
 - A larger evaluation set built from real member questions, if the client can share anonymized ones (our TA's suggestion), plus a usability test with five people.
 - Tiered access for member organizations, if the client wants it (`private/access_policy.json` already supports member-only documents).
 - Simulated visitor traffic to show the needs report at realistic volume.

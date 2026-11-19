@@ -9,9 +9,13 @@ Creates the (public) Space if it doesn't exist yet, asks for its secrets, and up
 Hugging Face then builds the image, crawling the website as part of the build (about 5 minutes),
 and starts the app at https://<username>-<space-name>.hf.space.
 
-Secrets are typed into this terminal and sent straight to Hugging Face. The key and access code
-are hidden as you type. Press Enter to keep a value that is already set on the Space. Run again
-with --code-only to upload new code without touching the secrets.
+It also creates a private dataset, <space-name>-logs, that the app backs its logs up to, so the
+staff dashboard (/admin) keeps its data when the Space restarts (see member_assistant/logsync.py).
+
+Secrets are typed into this terminal and sent straight to Hugging Face. Keys and passwords are
+hidden as you type. Press Enter to keep a value that is already set on the Space. Run again with
+--code-only to upload new code without touching the secrets, or with --secrets NAME,NAME to set
+only those.
 """
 
 import argparse
@@ -34,6 +38,8 @@ SECRETS = [
     ("CLIENT_SITE", "Client website root URL", False),
     ("COUNTY_WIKI", "Wikipedia article listing the region's municipalities", False),
     ("ACCESS_CODE", "Access code visitors must enter (strongly recommended until the client approves)", True),
+    ("ADMIN_PASSWORD", "Password for the staff dashboard at /admin (empty turns the dashboard off)", True),
+    ("HF_TOKEN", "Hugging Face token that can write to the logs dataset (a fine-grained token limited to it)", True),
 ]
 
 
@@ -45,11 +51,13 @@ def saved_crawl_args() -> dict:
         return {}
 
 
-def ask_secrets(api: HfApi, repo_id: str, new_space: bool) -> None:
+def ask_secrets(api: HfApi, repo_id: str, new_space: bool, only: set[str] | None = None) -> None:
     saved = saved_crawl_args()
     defaults = {"CLIENT_SITE": saved.get("site"), "COUNTY_WIKI": saved.get("county_wiki")}
     keep = "" if new_space else ", Enter keeps the current value"
     for name, prompt, hidden in SECRETS:
+        if only and name not in only:
+            continue
         default = defaults.get(name)
         hint = f" [{default}]" if default and not hidden else ""
         text = f"{name}: {prompt}{hint}{keep}: "
@@ -91,6 +99,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("space", help="<space-name> or <username>/<space-name>, for example website-assistant")
     parser.add_argument("--code-only", action="store_true", help="Upload code; don't ask for secrets")
+    parser.add_argument("--secrets", help="Comma-separated secret names to set; the others are left alone")
     args = parser.parse_args()
 
     api = HfApi()
@@ -102,8 +111,20 @@ def main() -> None:
     api.create_repo(args.space, repo_type="space", space_sdk="docker", private=False, exist_ok=True)
     print(("Created" if new_space else "Updating") + f" https://huggingface.co/spaces/{args.space}")
 
+    logs = f"{args.space}-logs"
+    api.create_repo(logs, repo_type="dataset", private=True, exist_ok=True)
+    api.add_space_variable(args.space, "LOG_DATASET", logs)
+    print(f"Logs are backed up to the private dataset https://huggingface.co/datasets/{logs}")
+
     if not args.code_only:
-        ask_secrets(api, args.space, new_space)
+        only = {n.strip() for n in args.secrets.split(",")} if args.secrets else None
+        unknown = (only or set()) - {name for name, _, _ in SECRETS}
+        if unknown:
+            sys.exit(f"Unknown secret names: {', '.join(sorted(unknown))}")
+        if not only or "HF_TOKEN" in only:
+            print(f"\nFor HF_TOKEN, create a fine-grained token at https://huggingface.co/settings/tokens/new?tokenType=fineGrained\n"
+                  f"with write access to the dataset {logs} only.\n")
+        ask_secrets(api, args.space, new_space, only)
 
     stage = staged_files()
     try:
