@@ -25,7 +25,7 @@ python -m member_assistant.web          # http://127.0.0.1:8000
 
 ## Limits for a public endpoint
 
-Every message costs money (about $0.04 with Claude Opus 5.5), so the server enforces these limits. Each is an environment variable.
+Every message costs money. With Claude Opus 5.5 the average in the evaluation was about $0.04. In a live test of the website, single answers cost $0.03 to $0.10 (more when the agent escalates or reads several pages) and took 7 to 19 seconds. Emergency messages are answered without calling the model and cost nothing. The server enforces these limits. Each is an environment variable.
 
 | Variable | Default | What it does |
 | --- | --- | --- |

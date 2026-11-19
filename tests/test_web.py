@@ -8,7 +8,7 @@ from conftest import CONTACTS, MUNICIPALITIES, PROFILE, PROGRAMS
 from fastapi.testclient import TestClient
 
 from member_assistant import config
-from member_assistant.web import Settings, create_app
+from member_assistant.web import Settings, create_app, source_cards, step_view
 
 
 def _usage():
@@ -149,3 +149,30 @@ def test_refuses_to_start_when_the_model_has_no_price(site, kb, monkeypatch):
     monkeypatch.setattr(config, "MODEL", "some-unpriced-model")
     with pytest.raises(RuntimeError, match="PRICES"):
         create_app(Settings(), client=ToolThenTextClient(), kb=kb)
+
+
+def test_step_view_summarizes_json_results():
+    programs = step_view({
+        "tool": "list_programs", "input": {"category": "all"}, "result": "[ {...", "is_error": False,
+        "output": json.dumps([{"name": "Solar", "category": "x"}, {"name": "Stormwater"}]),
+    })
+    assert programs["label"] == "Listed programs"
+    assert programs["detail"] == "Solar, Stormwater"
+    contact = step_view({
+        "tool": "find_contact", "input": {"topic": "solar"}, "result": "{...", "is_error": False,
+        "output": json.dumps({"matches": [{"role": "Director", "email": "a@example.org"}]}),
+    })
+    assert contact["detail"] == "Director · a@example.org"
+    assert step_view({"tool": "list_programs", "input": {}, "result": "not json", "output": None})["detail"] == ""
+
+
+def test_source_cards_merge_chunks_of_one_page():
+    cards = source_cards([
+        {"title": "LEAD (part 3 of 3)", "source": "https://example.org/lead/"},
+        {"title": "LEAD (part 1 of 3)", "source": "https://example.org/lead/"},
+        {"title": "Plan (p. 5)", "source": "https://example.org/plan.pdf"},
+    ])
+    assert cards == [
+        {"title": "LEAD", "url": "https://example.org/lead/"},
+        {"title": "Plan (p. 5)", "url": "https://example.org/plan.pdf"},
+    ]

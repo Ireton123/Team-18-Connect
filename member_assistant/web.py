@@ -24,6 +24,7 @@ import json
 import logging
 import os
 import queue
+import re
 import secrets
 import threading
 import time
@@ -242,13 +243,34 @@ def step_view(step: dict) -> dict:
             detail = " · ".join(x for x in (match.get("role"), match.get("email")) if x)
         except (ValueError, AttributeError, IndexError):
             detail = ""
+    elif tool == "list_programs":  # the result is a JSON list; show the program names
+        try:
+            names = [p["name"] for p in json.loads(step.get("output") or "[]") if p.get("name")]
+            detail = _short(", ".join(names), 160)
+        except (ValueError, TypeError, KeyError, AttributeError):
+            detail = ""
     return {"tool": tool, "label": label, "detail": detail, "is_error": bool(step.get("is_error"))}
+
+
+_CHUNK_SUFFIX = re.compile(r"\s*\(part \d+ of \d+\)$")
+
+
+def source_cards(citations: list[dict]) -> list[dict]:
+    """One card per page. The knowledge base splits pages into chunks ("About (part 2 of 3)"),
+    and several chunks of one page often back the same answer."""
+    cards, seen = [], set()
+    for c in citations:
+        if c["source"] in seen:
+            continue
+        seen.add(c["source"])
+        cards.append({"title": _CHUNK_SUFFIX.sub("", c["title"]), "url": c["source"]})
+    return cards
 
 
 def reply_view(reply: Reply) -> dict:
     return {
         "text": reply.text,
-        "citations": [{"title": c["title"], "url": c["source"]} for c in reply.citations],
+        "citations": source_cards(reply.citations),
         "escalations": [{"reference": e["reference"], "routed_to": e["routed_to"]} for e in reply.escalations],
         "outcome": (reply.need or {}).get("outcome"),
         "guardrail_events": reply.guardrail_events,
