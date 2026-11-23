@@ -244,10 +244,10 @@ private/            (not committed) crawled site, contacts, logs, evaluation set
 
 | Member | GitHub | Bio |
 | --- | --- | --- |
-| Wenjun Chen | [Ireton123](https://github.com/Ireton123) | _To add: 1–2 sentences on program, background and role on the team._ |
-| Andy Nguyen | _add profile link_ | _To add._ |
-| Miao Guo | [miaog-art](https://github.com/miaog-art) | _To add._ |
-| Leo Chikava | [lchikava](https://github.com/lchikava) | _To add._ |
+| Wenjun Chen | [Ireton123](https://github.com/Ireton123) | Wenjun is a graduate student at Carnegie Mellon University’s Heinz College with experience in Python and language model APIs. |
+| Andy Nguyen | [nda122](https://github.com/nda122) | Andy Nguyen works with Python and large language models and has built a system that turns questions in everyday language into SQL queries. |
+| Miao Guo | [miaog-art](https://github.com/miaog-art) | Miao Guo is an AIM student at CMU who enjoys turning AI prototypes into tools people can use. |
+| Leo Chikava | [lchikava](https://github.com/lchikava) | Leo Chikava has a background in business administration and experience analyzing client needs and evaluating proposed solutions. |
 
 ## References
 
